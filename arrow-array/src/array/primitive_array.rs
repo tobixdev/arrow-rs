@@ -25,7 +25,7 @@ use crate::timezone::Tz;
 use crate::trusted_len::trusted_len_unzip;
 use crate::types::*;
 use crate::{Array, ArrayAccessor, ArrayRef, Scalar};
-use arrow_buffer::{ArrowNativeType, Buffer, NullBuffer, ScalarBuffer, i256};
+use arrow_buffer::{i256, ArrowNativeType, Buffer, NullBuffer, ScalarBuffer};
 use arrow_data::bit_iterator::try_for_each_valid_idx;
 use arrow_data::{ArrayData, ArrayDataBuilder};
 use arrow_schema::{ArrowError, DataType};
@@ -1458,20 +1458,23 @@ impl<T: ArrowPrimitiveType, Ptr: Into<NativeAdapter<T>>> FromIterator<Ptr> for P
 
 impl<T: ArrowPrimitiveType> PrimitiveArray<T> {
     /// Creates a [`PrimitiveArray`] from an iterator of trusted length.
+    ///
     /// # Safety
+    ///
     /// The iterator must be [`TrustedLen`](https://doc.rust-lang.org/std/iter/trait.TrustedLen.html).
-    /// I.e. that `size_hint().1` correctly reports its length.
+    /// I.e. that `size_hint().1` correctly reports its length. Note that this is a stronger
+    /// guarantee that `ExactSizeIterator` provides which could still report a wrong length.    ///
+    /// # Panics
+    ///
+    /// Panics if the iterator does not report an upper bound on `size_hint()`.
     #[inline]
     pub unsafe fn from_trusted_len_iter<I, P>(iter: I) -> Self
     where
         P: std::borrow::Borrow<Option<<T as ArrowPrimitiveType>::Native>>,
-        I: IntoIterator<Item = P>,
+        I: ExactSizeIterator<Item = P>,
     {
-        let iterator = iter.into_iter();
-        let (_, upper) = iterator.size_hint();
-        let len = upper.expect("trusted_len_unzip requires an upper limit");
-
-        let (null, buffer) = unsafe { trusted_len_unzip(iterator) };
+        let len = iter.len();
+        let (null, buffer) = unsafe { trusted_len_unzip(iter) };
 
         let data = unsafe {
             ArrayData::new_unchecked(T::DATA_TYPE, len, None, Some(null), 0, vec![buffer], vec![])
@@ -1726,11 +1729,11 @@ impl<T: DecimalType + ArrowPrimitiveType> PrimitiveArray<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::BooleanArray;
     use crate::builder::{
-        Decimal32Builder, Decimal64Builder, Decimal128Builder, Decimal256Builder,
+        Decimal128Builder, Decimal256Builder, Decimal32Builder, Decimal64Builder,
     };
     use crate::cast::downcast_array;
+    use crate::BooleanArray;
     use arrow_buffer::{IntervalDayTime, IntervalMonthDayNano};
     use arrow_schema::TimeUnit;
 
