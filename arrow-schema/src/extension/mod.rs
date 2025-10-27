@@ -19,8 +19,10 @@
 
 #[cfg(feature = "canonical_extension_types")]
 mod canonical;
+
 #[cfg(feature = "canonical_extension_types")]
 pub use canonical::*;
+use std::any::Any;
 
 use crate::{ArrowError, DataType};
 
@@ -183,7 +185,7 @@ pub const EXTENSION_TYPE_METADATA_KEY: &str = "ARROW:extension:metadata";
 /// <https://arrow.apache.org/docs/format/Columnar.html#extension-types>
 ///
 /// [`Field`]: crate::Field
-pub trait ExtensionType: Sized {
+pub trait ExtensionType: Sized + DynExtensionType {
     /// The name identifying this extension type.
     ///
     /// This is the string value that is used for the
@@ -255,4 +257,15 @@ pub trait ExtensionType: Sized {
     /// This should return an error if the given data type is not supported by
     /// this extension type.
     fn try_new(data_type: &DataType, metadata: Self::Metadata) -> Result<Self, ArrowError>;
+}
+
+/// Extension types methods that are dyn-compatible. See [ExtensionType] for a full description.
+///
+/// This trait exists such that users can "extension type registries" based on the arrow-rs
+/// traits. This is only possible if the trait is dyn-compatible, as registries will usually employ
+/// `Arc<dyn DynExtensionType>` for implementing the trait.
+pub trait DynExtensionType: Sync + Send {
+    /// Returns the extension type as an [Any] so that it can be downcast to a specific
+    /// implementation.
+    fn as_any(&self) -> &dyn Any;
 }

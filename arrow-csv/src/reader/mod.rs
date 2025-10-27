@@ -1506,8 +1506,11 @@ mod tests {
 
         // The value on line 13 is outside of the bounds. Therefore
         // the call to .value() will panic.
-        let result = std::panic::catch_unwind(|| city.value(13));
-        assert!(result.is_err());
+
+        // TODO: unwind safety issue with
+        // let result = std::panic::catch_unwind(|| city.value(13));
+        // assert!(result.is_err());
+        assert!(false, "How to proceed here.")
     }
 
     #[test]

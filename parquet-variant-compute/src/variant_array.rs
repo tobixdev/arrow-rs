@@ -27,12 +27,13 @@ use arrow::datatypes::{
     Float64Type, Int8Type, Int16Type, Int32Type, Int64Type, Time64MicrosecondType,
     TimestampMicrosecondType, TimestampNanosecondType,
 };
-use arrow_schema::extension::ExtensionType;
+use arrow_schema::extension::{DynExtensionType, ExtensionType};
 use arrow_schema::{ArrowError, DataType, Field, FieldRef, Fields, TimeUnit};
 use chrono::{DateTime, NaiveTime};
 use parquet_variant::{
     Uuid, Variant, VariantDecimal4, VariantDecimal8, VariantDecimal16, VariantDecimalType as _,
 };
+use std::any::Any;
 
 use std::borrow::Cow;
 use std::sync::Arc;
@@ -42,6 +43,12 @@ use std::sync::Arc;
 /// Represents the canonical Arrow Extension Type for storing variants.
 /// See [`VariantArray`] for more examples of using this extension type.
 pub struct VariantType;
+
+impl DynExtensionType for VariantType {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
 
 impl ExtensionType for VariantType {
     const NAME: &'static str = "arrow.parquet.variant";

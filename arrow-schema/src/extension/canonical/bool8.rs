@@ -19,7 +19,9 @@
 //!
 //! <https://arrow.apache.org/docs/format/CanonicalExtensions.html#bit-boolean>
 
+use std::any::Any;
 use crate::{ArrowError, DataType, extension::ExtensionType};
+use crate::extension::DynExtensionType;
 
 /// The extension type for `8-bit Boolean`.
 ///
@@ -32,6 +34,12 @@ use crate::{ArrowError, DataType, extension::ExtensionType};
 /// <https://arrow.apache.org/docs/format/CanonicalExtensions.html#bit-boolean>
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct Bool8;
+
+impl DynExtensionType for Bool8 {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
 
 impl ExtensionType for Bool8 {
     const NAME: &'static str = "arrow.bool8";

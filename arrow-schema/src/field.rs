@@ -24,6 +24,7 @@ use std::sync::Arc;
 use crate::datatype::DataType;
 #[cfg(feature = "canonical_extension_types")]
 use crate::extension::CanonicalExtensionType;
+use crate::extension::DynExtensionType;
 use crate::schema::SchemaBuilder;
 use crate::{
     Fields, UnionFields, UnionMode,
@@ -58,6 +59,11 @@ pub struct Field {
     dict_is_ordered: bool,
     /// A map of key-value pairs containing additional custom meta data.
     metadata: HashMap<String, String>,
+    /// An optional instance of an extension type.
+    ///
+    /// The [DynExtensionType] implements `Any` so it can be used by users to store their own
+    /// specialized extension type traits.
+    extension_type: Option<Arc<dyn DynExtensionType>>,
 }
 
 impl std::fmt::Debug for Field {
@@ -70,6 +76,7 @@ impl std::fmt::Debug for Field {
             dict_id,
             dict_is_ordered,
             metadata,
+            extension_type: _extension_type,
         } = self;
 
         let mut s = f.debug_struct("Field");
@@ -198,6 +205,7 @@ impl Field {
             dict_id: 0,
             dict_is_ordered: false,
             metadata: HashMap::default(),
+            extension_type: None,
         }
     }
 
@@ -239,6 +247,7 @@ impl Field {
             dict_id,
             dict_is_ordered,
             metadata: HashMap::default(),
+            extension_type: None,
         }
     }
 
@@ -610,7 +619,7 @@ impl Field {
     ///
     /// This functions returns an error if the data type of this field does not
     /// match any of the supported storage types of the given extension type.
-    pub fn try_with_extension_type<E: ExtensionType>(
+    pub fn try_with_extension_type<E: ExtensionType + 'static>(
         &mut self,
         extension_type: E,
     ) -> Result<(), ArrowError> {
@@ -628,6 +637,8 @@ impl Field {
             None => self.metadata.remove(EXTENSION_TYPE_METADATA_KEY),
         };
 
+        self.extension_type = Some(Arc::new(extension_type));
+
         Ok(())
     }
 
@@ -638,7 +649,7 @@ impl Field {
     ///
     /// This calls [`Field::try_with_extension_type`] and panics when it
     /// returns an error.
-    pub fn with_extension_type<E: ExtensionType>(mut self, extension_type: E) -> Self {
+    pub fn with_extension_type<E: ExtensionType + 'static>(mut self, extension_type: E) -> Self {
         self.try_with_extension_type(extension_type)
             .unwrap_or_else(|e| panic!("{e}"));
         self
@@ -978,6 +989,7 @@ impl std::fmt::Display for Field {
             dict_id,
             dict_is_ordered,
             metadata,
+            extension_type: _extension_type,
         } = self;
         let maybe_nullable = if *nullable { "nullable " } else { "" };
         let metadata_str = if metadata.is_empty() {

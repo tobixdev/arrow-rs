@@ -22,8 +22,10 @@
 use serde_core::de::{self, MapAccess, Visitor};
 use serde_core::ser::SerializeStruct;
 use serde_core::{Deserialize, Deserializer, Serialize, Serializer};
+use std::any::Any;
 use std::fmt;
 
+use crate::extension::DynExtensionType;
 use crate::{ArrowError, DataType, extension::ExtensionType};
 
 /// The extension type for fixed shape tensor.
@@ -354,6 +356,12 @@ impl FixedShapeTensorMetadata {
     /// dimensions, if set.
     pub fn permutations(&self) -> Option<&[usize]> {
         self.permutations.as_ref().map(AsRef::as_ref)
+    }
+}
+
+impl DynExtensionType for FixedShapeTensor {
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 

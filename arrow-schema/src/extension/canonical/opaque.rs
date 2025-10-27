@@ -24,7 +24,9 @@ use serde_core::{
     Deserialize, Deserializer, Serialize, Serializer,
     de::{MapAccess, Visitor},
 };
+use std::any::Any;
 
+use crate::extension::DynExtensionType;
 use crate::{ArrowError, DataType, extension::ExtensionType};
 
 /// The extension type for `Opaque`.
@@ -216,6 +218,12 @@ impl OpaqueMetadata {
     /// Returns the name of the external system.
     pub fn vendor_name(&self) -> &str {
         &self.vendor_name
+    }
+}
+
+impl DynExtensionType for Opaque {
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 

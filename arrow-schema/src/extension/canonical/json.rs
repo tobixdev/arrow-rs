@@ -22,8 +22,10 @@
 use serde_core::de::{self, MapAccess, Visitor};
 use serde_core::ser::SerializeStruct;
 use serde_core::{Deserialize, Deserializer, Serialize, Serializer};
+use std::any::Any;
 use std::fmt;
 
+use crate::extension::DynExtensionType;
 use crate::{ArrowError, DataType, extension::ExtensionType};
 
 /// The extension type for `JSON`.
@@ -120,6 +122,12 @@ impl<'de> Deserialize<'de> for Empty {
 /// Extension type metadata for [`Json`].
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct JsonMetadata(Option<Empty>);
+
+impl DynExtensionType for Json {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
 
 impl ExtensionType for Json {
     const NAME: &'static str = "arrow.json";

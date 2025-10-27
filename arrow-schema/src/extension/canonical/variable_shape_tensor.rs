@@ -21,8 +21,10 @@
 
 use serde_core::de::{self, MapAccess, Visitor};
 use serde_core::{Deserialize, Deserializer, Serialize, Serializer};
+use std::any::Any;
 use std::fmt;
 
+use crate::extension::DynExtensionType;
 use crate::{ArrowError, DataType, Field, extension::ExtensionType};
 
 /// The extension type for `VariableShapeTensor`.
@@ -372,6 +374,12 @@ impl VariableShapeTensorMetadata {
     /// dimensions.
     pub fn uniform_shapes(&self) -> Option<&[Option<i32>]> {
         self.uniform_shape.as_ref().map(AsRef::as_ref)
+    }
+}
+
+impl DynExtensionType for VariableShapeTensor {
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 

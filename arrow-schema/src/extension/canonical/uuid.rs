@@ -19,7 +19,9 @@
 //!
 //! <https://arrow.apache.org/docs/format/CanonicalExtensions.html#uuid>
 
+use crate::extension::DynExtensionType;
 use crate::{ArrowError, DataType, extension::ExtensionType};
+use std::any::Any;
 
 /// The extension type for `UUID`.
 ///
@@ -36,6 +38,12 @@ use crate::{ArrowError, DataType, extension::ExtensionType};
 /// <https://arrow.apache.org/docs/format/CanonicalExtensions.html#uuid>
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct Uuid;
+
+impl DynExtensionType for Uuid {
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+}
 
 impl ExtensionType for Uuid {
     const NAME: &'static str = "arrow.uuid";
