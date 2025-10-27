@@ -261,7 +261,9 @@ pub trait ExtensionType: Sized + DynExtensionType {
 
 /// Extension types methods that are dyn-compatible. See [ExtensionType] for a full description.
 ///
-/// This trait exists such that users can "extension type registries" based on the arrow-rs
+/// TODO: In the future we could provide some functions here (e.g., supports_data_type).
+///
+/// This trait exists such that users can create "extension type registries" based on the arrow-rs
 /// traits. This is only possible if the trait is dyn-compatible, as registries will usually employ
 /// `Arc<dyn DynExtensionType>` for implementing the trait.
 pub trait DynExtensionType: Sync + Send {
